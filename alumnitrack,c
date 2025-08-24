@@ -1,0 +1,274 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define NAME_LEN 50
+#define DEPT_LEN 20
+#define OCC_LEN 50
+
+typedef struct Alumni {
+    int alumniID;
+    char name[NAME_LEN];
+    char department[DEPT_LEN];
+    int graduationYear;
+    char occupation[OCC_LEN];
+    struct Alumni* next;
+} Alumni;
+
+// Create new node
+Alumni* createAlumni(int id, const char* name, const char* dept, int year, const char* occ) {
+    Alumni* newNode = (Alumni*)malloc(sizeof(Alumni));
+    if (!newNode) {
+        printf("Memory allocation failed\n");
+        exit(1);
+    }
+    newNode->alumniID = id;
+    strncpy(newNode->name, name, NAME_LEN);
+    strncpy(newNode->department, dept, DEPT_LEN);
+    newNode->graduationYear = year;
+    strncpy(newNode->occupation, occ, OCC_LEN);
+    newNode->next = NULL;
+    return newNode;
+}
+
+// Insert at end
+void insertAlumni(Alumni** head, int id, const char* name, const char* dept, int year, const char* occ) {
+    Alumni* newNode = createAlumni(id, name, dept, year, occ);
+    if (*head == NULL) {
+        *head = newNode;
+        return;
+    }
+    Alumni* temp = *head;
+    while (temp->next)
+        temp = temp->next;
+    temp->next = newNode;
+}
+
+// Search by ID
+Alumni* searchByID(Alumni* head, int id) {
+    while (head) {
+        if (head->alumniID == id)
+            return head;
+        head = head->next;
+    }
+    return NULL;
+}
+
+// Search by Name
+Alumni* searchByName(Alumni* head, const char* name) {
+    while (head) {
+        if (strcmp(head->name, name) == 0)
+            return head;
+        head = head->next;
+    }
+    return NULL;
+}
+
+// Delete by ID
+void deleteAlumni(Alumni** head, int id) {
+    if (*head == NULL) return;
+
+    Alumni* temp = *head;
+    Alumni* prev = NULL;
+
+    // If head needs to be deleted
+    if (temp->alumniID == id) {
+        *head = temp->next;
+        free(temp);
+        printf("Alumni with ID %d deleted.\n", id);
+        return;
+    }
+
+    while (temp && temp->alumniID != id) {
+        prev = temp;
+        temp = temp->next;
+    }
+
+    if (temp == NULL) {
+        printf("Alumni with ID %d not found.\n", id);
+        return;
+    }
+
+    prev->next = temp->next;
+    free(temp);
+    printf("Alumni with ID %d deleted.\n", id);
+}
+
+// Display all alumni
+void displayAll(Alumni* head) {
+    if (head == NULL) {
+        printf("No alumni records found.\n");
+        return;
+    }
+    while (head) {
+        printf("ID: %d, Name: %s, Dept: %s, Year: %d, Occupation: %s\n",
+               head->alumniID, head->name, head->department, head->graduationYear, head->occupation);
+        head = head->next;
+    }
+}
+
+// Display in reverse (recursive)
+void displayReverse(Alumni* head) {
+    if (head == NULL) return;
+    displayReverse(head->next);
+    printf("ID: %d, Name: %s, Dept: %s, Year: %d, Occupation: %s\n",
+           head->alumniID, head->name, head->department, head->graduationYear, head->occupation);
+}
+
+// Clone list
+Alumni* cloneList(Alumni* head) {
+    if (head == NULL) return NULL;
+
+    Alumni* newHead = createAlumni(head->alumniID, head->name, head->department, head->graduationYear, head->occupation);
+    Alumni* tempNew = newHead;
+    Alumni* tempOld = head->next;
+
+    while (tempOld) {
+        tempNew->next = createAlumni(tempOld->alumniID, tempOld->name, tempOld->department, tempOld->graduationYear, tempOld->occupation);
+        tempNew = tempNew->next;
+        tempOld = tempOld->next;
+    }
+    return newHead;
+}
+
+// Department wise display
+void displayByDepartment(Alumni* head, const char* dept) {
+    int found = 0;
+    while (head) {
+        if (strcmp(head->department, dept) == 0) {
+            printf("ID: %d, Name: %s, Year: %d, Occupation: %s\n",
+                   head->alumniID, head->name, head->graduationYear, head->occupation);
+            found = 1;
+        }
+        head = head->next;
+    }
+    if (!found)
+        printf("No alumni found in department %s\n", dept);
+}
+
+// Clear entire list (free memory)
+void freeList(Alumni* head) {
+    Alumni* temp;
+    while (head) {
+        temp = head;
+        head = head->next;
+        free(temp);
+    }
+}
+
+// Main menu driver
+int main() {
+    Alumni* alumniList = NULL;
+    int choice;
+    int id, year;
+    char name[NAME_LEN], dept[DEPT_LEN], occ[OCC_LEN];
+    Alumni* result;
+    Alumni* clonedList;
+
+    while (1) {
+        printf("\n===== Alumni Tracking System =====\n");
+        printf("1. Insert New Alumni\n");
+        printf("2. Search by ID\n");
+        printf("3. Search by Name\n");
+        printf("4. Delete Alumni\n");
+        printf("5. Display All Alumni\n");
+        printf("6. Reverse Display\n");
+        printf("7. Clone Alumni List\n");
+        printf("8. Department-wise Display\n");
+        printf("9. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+        getchar(); // consume newline after number input
+
+        switch (choice) {
+            case 1:
+                printf("Enter ID: ");
+                scanf("%d", &id);
+                getchar();
+                printf("Enter Name: ");
+                fgets(name, NAME_LEN, stdin);
+                name[strcspn(name, "\n")] = 0;  // remove newline
+
+                printf("Enter Department: ");
+                fgets(dept, DEPT_LEN, stdin);
+                dept[strcspn(dept, "\n")] = 0;
+
+                printf("Enter Graduation Year: ");
+                scanf("%d", &year);
+                getchar();
+
+                printf("Enter Occupation: ");
+                fgets(occ, OCC_LEN, stdin);
+                occ[strcspn(occ, "\n")] = 0;
+
+                insertAlumni(&alumniList, id, name, dept, year, occ);
+                printf("Alumni inserted successfully.\n");
+                break;
+
+            case 2:
+                printf("Enter ID to search: ");
+                scanf("%d", &id);
+                getchar();
+                result = searchByID(alumniList, id);
+                if (result)
+                    printf("Found: %s, Dept: %s, Year: %d, Occupation: %s\n",
+                           result->name, result->department, result->graduationYear, result->occupation);
+                else
+                    printf("Alumni with ID %d not found.\n", id);
+                break;
+
+            case 3:
+                printf("Enter Name to search: ");
+                fgets(name, NAME_LEN, stdin);
+                name[strcspn(name, "\n")] = 0;
+                result = searchByName(alumniList, name);
+                if (result)
+                    printf("Found: ID %d, Dept: %s, Year: %d, Occupation: %s\n",
+                           result->alumniID, result->department, result->graduationYear, result->occupation);
+                else
+                    printf("Alumni named '%s' not found.\n", name);
+                break;
+
+            case 4:
+                printf("Enter ID to delete: ");
+                scanf("%d", &id);
+                getchar();
+                deleteAlumni(&alumniList, id);
+                break;
+
+            case 5:
+                printf("Displaying all alumni:\n");
+                displayAll(alumniList);
+                break;
+
+            case 6:
+                printf("Displaying alumni in reverse:\n");
+                displayReverse(alumniList);
+                break;
+
+            case 7:
+                clonedList = cloneList(alumniList);
+                printf("Cloned list:\n");
+                displayAll(clonedList);
+                freeList(clonedList);
+                break;
+
+            case 8:
+                printf("Enter Department to display: ");
+                fgets(dept, DEPT_LEN, stdin);
+                dept[strcspn(dept, "\n")] = 0;
+                displayByDepartment(alumniList, dept);
+                break;
+
+            case 9:
+                freeList(alumniList);
+                printf("Exiting...\n");
+                exit(0);
+
+            default:
+                printf("Invalid choice. Try again.\n");
+        }
+    }
+
+    return 0;
+}
